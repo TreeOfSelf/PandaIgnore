@@ -23,13 +23,13 @@ public class MessageCommandMixin {
         MessageType.Parameters parameters = MessageType.params(MessageType.MSG_COMMAND_INCOMING, source);
         SentMessage sentMessage = SentMessage.of(message);
         boolean bl = false;
-        boolean bl2;
+        boolean bl2 = false;
         for(Iterator var6 = targets.iterator(); var6.hasNext(); bl |= bl2 && message.isFullyFiltered()) {
             ServerPlayerEntity serverPlayerEntity = (ServerPlayerEntity)var6.next();
             StateSaverAndLoader.PlayerIgnoreData playerData = StateSaverAndLoader.getPlayerState(serverPlayerEntity);
+            MessageType.Parameters parameters2 = MessageType.params(MessageType.MSG_COMMAND_OUTGOING, source).withTargetName(serverPlayerEntity.getDisplayName());
+            source.sendChatMessage(sentMessage, false, parameters2);
             if (!playerData.ignoredPlayers.contains(source.getPlayer().getUuid())) {
-                MessageType.Parameters parameters2 = MessageType.params(MessageType.MSG_COMMAND_OUTGOING, source).withTargetName(serverPlayerEntity.getDisplayName());
-                source.sendChatMessage(sentMessage, false, parameters2);
                 bl2 = source.shouldFilterText(serverPlayerEntity);
                 serverPlayerEntity.sendChatMessage(sentMessage, bl2, parameters);
             }
