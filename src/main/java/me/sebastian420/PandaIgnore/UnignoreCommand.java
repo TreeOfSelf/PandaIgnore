@@ -17,10 +17,14 @@ public class UnignoreCommand {
     public UnignoreCommand() {
     }
 
-    private static final SuggestionProvider<ServerCommandSource> PLAYER_SUGGESTION_PROVIDER = (context, builder) -> {
+    private static final SuggestionProvider<ServerCommandSource> PLAYER_IGNORED_BUILDER = (context, builder) -> {
+        ServerPlayerEntity player = context.getSource().getPlayerOrThrow();
+        StateSaverAndLoader.PlayerIgnoreData playerData = StateSaverAndLoader.getPlayerState(player);
+
         String input = builder.getRemaining().toLowerCase();
         List<String> playerNames = context.getSource().getServer().getPlayerManager().getPlayerList().stream()
-                .map(player -> player.getGameProfile().getName())
+                .filter(p -> playerData.ignoredPlayers.contains(p.getUuid()) && !p.getUuid().equals(player.getUuid()))  // Only players ignored and not self
+                .map(p -> p.getGameProfile().getName())
                 .filter(name -> name.toLowerCase().startsWith(input))
                 .toList();
 
@@ -30,10 +34,11 @@ public class UnignoreCommand {
         return builder.buildFuture();
     };
 
+
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
         dispatcher.register(literal("unignore")
                 .then(argument("player", EntityArgumentType.player())
-                        .suggests(PLAYER_SUGGESTION_PROVIDER)
+                        .suggests(PLAYER_IGNORED_BUILDER)
                         .executes(context -> removeIgnore(context.getSource(), EntityArgumentType.getPlayer(context, "player")))));
     }
 

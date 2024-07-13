@@ -17,10 +17,32 @@ public class IgnoreCommand {
     public IgnoreCommand() {
     }
 
-    private static final SuggestionProvider<ServerCommandSource> PLAYER_SUGGESTION_PROVIDER = (context, builder) -> {
+
+    private static final SuggestionProvider<ServerCommandSource> PLAYER_NOT_IGNORED_BUILDER = (context, builder) -> {
+        ServerPlayerEntity player = context.getSource().getPlayerOrThrow();
+        StateSaverAndLoader.PlayerIgnoreData playerData = StateSaverAndLoader.getPlayerState(player);
+
         String input = builder.getRemaining().toLowerCase();
         List<String> playerNames = context.getSource().getServer().getPlayerManager().getPlayerList().stream()
-                .map(player -> player.getGameProfile().getName())
+                .filter(p -> !playerData.ignoredPlayers.contains(p.getUuid()) && !p.getUuid().equals(player.getUuid()))  // Only players not ignored and not self
+                .map(p -> p.getGameProfile().getName())
+                .filter(name -> name.toLowerCase().startsWith(input))
+                .toList();
+
+        for (String name : playerNames) {
+            builder.suggest(name);
+        }
+        return builder.buildFuture();
+    };
+
+    private static final SuggestionProvider<ServerCommandSource> PLAYER_IGNORED_BUILDER = (context, builder) -> {
+        ServerPlayerEntity player = context.getSource().getPlayerOrThrow();
+        StateSaverAndLoader.PlayerIgnoreData playerData = StateSaverAndLoader.getPlayerState(player);
+
+        String input = builder.getRemaining().toLowerCase();
+        List<String> playerNames = context.getSource().getServer().getPlayerManager().getPlayerList().stream()
+                .filter(p -> playerData.ignoredPlayers.contains(p.getUuid()) && !p.getUuid().equals(player.getUuid()))  // Only players ignored and not self
+                .map(p -> p.getGameProfile().getName())
                 .filter(name -> name.toLowerCase().startsWith(input))
                 .toList();
 
@@ -33,13 +55,13 @@ public class IgnoreCommand {
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
         dispatcher.register(literal("ignore")
                 .then(argument("player", EntityArgumentType.player())
-                        .suggests(PLAYER_SUGGESTION_PROVIDER)
+                        .suggests(PLAYER_NOT_IGNORED_BUILDER)
                         .executes(context -> execute(context.getSource(), EntityArgumentType.getPlayer(context, "player"))))
                 .then(literal("list")
                         .executes(context -> listIgnored(context.getSource())))
                 .then(literal("remove")
                         .then(argument("player", EntityArgumentType.player())
-                                .suggests(PLAYER_SUGGESTION_PROVIDER)
+                                .suggests(PLAYER_IGNORED_BUILDER)
                                 .executes(context -> removeIgnore(context.getSource(), EntityArgumentType.getPlayer(context, "player"))))));
     }
 
