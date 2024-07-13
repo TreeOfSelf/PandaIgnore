@@ -1,10 +1,7 @@
 package me.sebastian420.PandaIgnore.mixin;
 
 import net.minecraft.network.ClientConnection;
-import net.minecraft.network.message.MessageChain;
-import net.minecraft.network.message.MessageChainTaskQueue;
-import net.minecraft.network.message.MessageType;
-import net.minecraft.network.message.SignedMessage;
+import net.minecraft.network.message.*;
 import net.minecraft.network.packet.c2s.play.ChatMessageC2SPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.MessageCommand;
@@ -34,10 +31,9 @@ public abstract class ServerPlayNetworkHandlerMixin extends ServerCommonNetworkH
 	@Inject(method = "handleDecoratedMessage", at = @At("HEAD"), cancellable = true)
 	private void handleDecoratedMessage(SignedMessage message, CallbackInfo ci) {
 		for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-			player.sendMessage(message.getContent(), false);
+			MessageType.Parameters parameters2 = MessageType.params(MessageType.MSG_COMMAND_OUTGOING, this.player.getCommandSource()).withTargetName(this.player.getDisplayName());
+			player.sendChatMessage(SentMessage.of(message), false, parameters2);
 		}
-
-
 		ci.cancel();
 		//this.server.getPlayerManager().broadcast(message, this.player, MessageType.params(MessageType.CHAT, this.player))
 	}

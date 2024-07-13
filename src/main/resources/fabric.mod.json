@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"id": "pandaignore",
+	"id": "panda-ignore",
 	"version": "${version}",
 	"name": "PandaIgnore",
 	"description": "Lets players use /ignore to ignore people",
@@ -12,7 +12,7 @@
 		"sources": ""
 	},
 	"license": "CC0-1.0",
-	"icon": "assets/pandaignore/icon.png",
+	"icon": "assets/panda-ignore/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
@@ -20,7 +20,7 @@
 		]
 	},
 	"mixins": [
-		"pandaignore.mixins.json"
+		"panda-ignore.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.15.11",
