@@ -28,10 +28,10 @@ public class IgnoreCommand {
     private static int execute(ServerCommandSource source, ServerPlayerEntity targetPlayer) throws CommandSyntaxException {
         ServerPlayerEntity player = source.getPlayerOrThrow();
 
-        if (player == targetPlayer) {
+        /*if (player == targetPlayer) {
             source.sendError(Text.literal("You cannot ignore yourself."));
             return 0;
-        }
+        }*/
 
         StateSaverAndLoader.PlayerIgnoreData playerData = StateSaverAndLoader.getPlayerState(player);
         if (playerData.ignoredPlayers.add(targetPlayer.getUuid())) {

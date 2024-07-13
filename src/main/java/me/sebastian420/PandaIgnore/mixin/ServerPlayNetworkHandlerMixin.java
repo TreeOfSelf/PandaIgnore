@@ -31,7 +31,7 @@ public abstract class ServerPlayNetworkHandlerMixin extends ServerCommonNetworkH
 	@Inject(method = "handleDecoratedMessage", at = @At("HEAD"), cancellable = true)
 	private void handleDecoratedMessage(SignedMessage message, CallbackInfo ci) {
 		for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-			MessageType.Parameters parameters2 = MessageType.params(MessageType.MSG_COMMAND_OUTGOING, this.player.getCommandSource()).withTargetName(this.player.getDisplayName());
+			MessageType.Parameters parameters2 = MessageType.params(MessageType.CHAT, this.player.getCommandSource()).withTargetName(this.player.getDisplayName());
 			player.sendChatMessage(SentMessage.of(message), false, parameters2);
 		}
 		ci.cancel();
