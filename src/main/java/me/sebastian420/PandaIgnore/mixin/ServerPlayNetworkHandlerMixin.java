@@ -1,5 +1,6 @@
 package me.sebastian420.PandaIgnore.mixin;
 
+import me.sebastian420.PandaIgnore.StateSaverAndLoader;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.network.message.*;
 import net.minecraft.network.packet.c2s.play.ChatMessageC2SPacket;
@@ -27,14 +28,15 @@ public abstract class ServerPlayNetworkHandlerMixin extends ServerCommonNetworkH
 		super(server, connection, clientData);
 	}
 
-
 	@Inject(method = "handleDecoratedMessage", at = @At("HEAD"), cancellable = true)
 	private void handleDecoratedMessage(SignedMessage message, CallbackInfo ci) {
 		for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+			StateSaverAndLoader.PlayerIgnoreData playerData = StateSaverAndLoader.getPlayerState(player);
+			if (!playerData.ignoredPlayers.contains(this.player.getUuid())) {
 			MessageType.Parameters parameters2 = MessageType.params(MessageType.CHAT, this.player.getCommandSource()).withTargetName(this.player.getDisplayName());
 			player.sendChatMessage(SentMessage.of(message), false, parameters2);
+			}
 		}
 		ci.cancel();
-		//this.server.getPlayerManager().broadcast(message, this.player, MessageType.params(MessageType.CHAT, this.player))
 	}
 }

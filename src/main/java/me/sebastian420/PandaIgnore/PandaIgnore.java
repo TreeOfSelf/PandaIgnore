@@ -13,8 +13,13 @@ public class PandaIgnore implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		LOGGER.info("PandaIgnore started!");
+
 		CommandRegistrationCallback.EVENT.register((dispatcher, dedicated, environment) -> {
 			IgnoreCommand.register(dispatcher);
+			UnignoreCommand.register(dispatcher);
+			IgnoreListCommand.register(dispatcher);
 		});
+
+
 	}
 }

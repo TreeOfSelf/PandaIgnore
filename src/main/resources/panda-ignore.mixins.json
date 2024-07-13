@@ -3,6 +3,8 @@
 	"package": "me.sebastian420.PandaIgnore.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
+		"MeCommandMixin",
+		"MessageCommandMixin",
 		"ServerPlayNetworkHandlerMixin"
 	],
 	"injectors": {
