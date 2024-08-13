@@ -39,25 +39,27 @@ public abstract class PlayerManagerMixin {
 
     @Inject(method = "broadcast(Lnet/minecraft/network/message/SignedMessage;Ljava/util/function/Predicate;Lnet/minecraft/server/network/ServerPlayerEntity;Lnet/minecraft/network/message/MessageType$Parameters;)V", at = @At("HEAD"), cancellable = true)
     private void broadcast(SignedMessage message, Predicate<ServerPlayerEntity> shouldSendFiltered, ServerPlayerEntity sender, MessageType.Parameters params, CallbackInfo ci) {
-        boolean bl = this.verify(message);
-        this.server.logChatMessage(message.getContent(), params, null);
-        SentMessage sentMessage = SentMessage.of(message);
-        boolean bl2 = false;
-        boolean bl3 = false;
-        for (Iterator var8 = this.players.iterator(); var8.hasNext(); bl2 |= bl3 && message.isFullyFiltered()) {
-            ServerPlayerEntity serverPlayerEntity = (ServerPlayerEntity) var8.next();
+        if (sender != null) {
+            boolean bl = this.verify(message);
+            this.server.logChatMessage(message.getContent(), params, null);
+            SentMessage sentMessage = SentMessage.of(message);
+            boolean bl2 = false;
+            boolean bl3 = false;
+            for (Iterator<ServerPlayerEntity> var8 = this.players.iterator(); var8.hasNext(); bl2 |= bl3 && message.isFullyFiltered()) {
+                ServerPlayerEntity serverPlayerEntity = (ServerPlayerEntity) var8.next();
 
-            StateSaverAndLoader.PlayerIgnoreData playerData = StateSaverAndLoader.getPlayerState(serverPlayerEntity);
-            if (!playerData.ignoredPlayers.contains(sender.getUuid())) {
+                StateSaverAndLoader.PlayerIgnoreData playerData = StateSaverAndLoader.getPlayerState(serverPlayerEntity);
+                if (!playerData.ignoredPlayers.contains(sender.getUuid())) {
 
-                bl3 = shouldSendFiltered.test(serverPlayerEntity);
-                serverPlayerEntity.sendChatMessage(sentMessage, bl3, params);
+                    bl3 = shouldSendFiltered.test(serverPlayerEntity);
+                    serverPlayerEntity.sendChatMessage(sentMessage, bl3, params);
+                }
+
+                if (bl2) {
+                    sender.sendMessage(FILTERED_FULL_TEXT);
+                }
+                ci.cancel();
             }
-
-            if (bl2 && sender != null) {
-                sender.sendMessage(FILTERED_FULL_TEXT);
-            }
-            ci.cancel();
         }
     }
 }
