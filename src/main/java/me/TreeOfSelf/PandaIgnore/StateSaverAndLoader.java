@@ -1,4 +1,4 @@
-package me.sebastian420.PandaIgnore;
+package me.TreeOfSelf.PandaIgnore;
 
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.nbt.NbtCompound;

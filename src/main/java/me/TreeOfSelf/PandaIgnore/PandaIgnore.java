@@ -1,4 +1,4 @@
-package me.sebastian420.PandaIgnore;
+package me.TreeOfSelf.PandaIgnore;
 
 import net.fabricmc.api.ModInitializer;
 

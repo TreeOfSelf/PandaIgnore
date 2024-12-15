@@ -1,6 +1,6 @@
-package me.sebastian420.PandaIgnore.mixin;
+package me.TreeOfSelf.PandaIgnore.mixin;
 
-import me.sebastian420.PandaIgnore.StateSaverAndLoader;
+import me.TreeOfSelf.PandaIgnore.StateSaverAndLoader;
 import net.minecraft.network.message.MessageType;
 import net.minecraft.network.message.SentMessage;
 import net.minecraft.network.message.SignedMessage;
