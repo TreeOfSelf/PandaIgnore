@@ -1,12 +1,17 @@
 package me.TreeOfSelf.PandaIgnore;
 
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.*;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.PersistentState;
 import net.minecraft.world.PersistentStateManager;
+import net.minecraft.world.PersistentStateType;
 import net.minecraft.world.World;
 
 import java.util.HashMap;
@@ -18,16 +23,35 @@ public class StateSaverAndLoader extends PersistentState {
 
     public HashMap<UUID, PlayerIgnoreData> players = new HashMap<>();
 
+
+    public static Codec<StateSaverAndLoader> codec(ServerWorld world) {
+        return Codec.of(new Encoder<>() {
+            @Override
+            public <T> DataResult<T> encode(StateSaverAndLoader stateSaverAndLoader, DynamicOps<T> dynamicOps, T t) {
+                NbtCompound nbtCompound = new NbtCompound();
+                stateSaverAndLoader.writeNbt(nbtCompound);
+                return DataResult.success((T) nbtCompound);
+            }
+        }, new Decoder<>() {
+            @Override
+            public <T> DataResult<Pair<StateSaverAndLoader, T>> decode(DynamicOps<T> ops, T input) {
+                NbtCompound nbtCompound = (NbtCompound) ops.convertTo(NbtOps.INSTANCE, input);
+                StateSaverAndLoader partnerState = createFromNbt(nbtCompound, world.getRegistryManager());
+                return DataResult.success(Pair.of(partnerState, ops.empty()));
+            }
+        });
+    }
+
     public static StateSaverAndLoader createFromNbt(NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
         StateSaverAndLoader state = new StateSaverAndLoader();
 
-        NbtCompound playersNbt = tag.getCompound("players");
+        NbtCompound playersNbt = tag.getCompound("players").get();
         playersNbt.getKeys().forEach(key -> {
             PlayerIgnoreData playerData = new PlayerIgnoreData();
 
-            NbtList ignoredPlayersNbt = playersNbt.getCompound(key).getList("ignoredPlayers", 10); // 10 is the NBT type for compound
+            NbtList ignoredPlayersNbt = playersNbt.getCompound(key).get().getList("ignoredPlayers").get();
             for (int i = 0; i < ignoredPlayersNbt.size(); i++) {
-                playerData.ignoredPlayers.add(UUID.fromString(ignoredPlayersNbt.getCompound(i).getString("uuid")));
+                playerData.ignoredPlayers.add(UUID.fromString(ignoredPlayersNbt.getCompound(i).get().getString("uuid").get()));
             }
 
             UUID uuid = UUID.fromString(key);
@@ -37,15 +61,18 @@ public class StateSaverAndLoader extends PersistentState {
         return state;
     }
 
-    private static Type<StateSaverAndLoader> type = new Type<>(
-            StateSaverAndLoader::new,
-            StateSaverAndLoader::createFromNbt,
-            null
-    );
 
     public static StateSaverAndLoader getServerState(MinecraftServer server) {
         PersistentStateManager persistentStateManager = server.getWorld(World.OVERWORLD).getPersistentStateManager();
-        StateSaverAndLoader state = persistentStateManager.getOrCreate(type, PandaIgnore.MOD_ID);
+
+        PersistentStateType<StateSaverAndLoader> type = new PersistentStateType<>(
+                PandaIgnore.MOD_ID,
+                StateSaverAndLoader::new,
+                codec(server.getWorld(World.OVERWORLD)),
+                null
+        );
+
+        StateSaverAndLoader state = persistentStateManager.getOrCreate(type);
         state.markDirty();
         return state;
     }
@@ -55,8 +82,8 @@ public class StateSaverAndLoader extends PersistentState {
         return serverState.players.computeIfAbsent(player.getUuid(), uuid -> new PlayerIgnoreData());
     }
 
-    @Override
-    public NbtCompound writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
+
+    public NbtCompound writeNbt(NbtCompound nbt) {
         NbtCompound playersNbt = new NbtCompound();
         players.forEach((uuid, playerData) -> {
             NbtCompound playerNbt = new NbtCompound();
