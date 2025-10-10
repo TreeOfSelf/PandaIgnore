@@ -24,7 +24,7 @@ public class UnignoreCommand {
         String input = builder.getRemaining().toLowerCase();
         List<String> playerNames = context.getSource().getServer().getPlayerManager().getPlayerList().stream()
                 .filter(p -> playerData.ignoredPlayers.contains(p.getUuid()) && !p.getUuid().equals(player.getUuid()))  // Only players ignored and not self
-                .map(p -> p.getGameProfile().getName())
+                .map(p -> p.getGameProfile().name())
                 .filter(name -> name.toLowerCase().startsWith(input))
                 .toList();
 

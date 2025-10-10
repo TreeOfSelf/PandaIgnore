@@ -16,7 +16,7 @@ public class IgnoreListCommand {
     private static final SuggestionProvider<ServerCommandSource> PLAYER_SUGGESTION_PROVIDER = (context, builder) -> {
         String input = builder.getRemaining().toLowerCase();
         List<String> playerNames = context.getSource().getServer().getPlayerManager().getPlayerList().stream()
-                .map(player -> player.getGameProfile().getName())
+                .map(player -> player.getGameProfile().name())
                 .filter(name -> name.toLowerCase().startsWith(input))
                 .toList();
 
