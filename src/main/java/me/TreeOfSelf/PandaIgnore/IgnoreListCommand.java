@@ -2,51 +2,31 @@ package me.TreeOfSelf.PandaIgnore;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.suggestion.SuggestionProvider;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import java.util.List;
-import static net.minecraft.server.command.CommandManager.literal;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 
 public class IgnoreListCommand {
-    public IgnoreListCommand() {
+
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(Commands.literal("ignorelist")
+                .executes(context -> listIgnored(context.getSource())));
     }
 
-    private static final SuggestionProvider<ServerCommandSource> PLAYER_SUGGESTION_PROVIDER = (context, builder) -> {
-        String input = builder.getRemaining().toLowerCase();
-        List<String> playerNames = context.getSource().getServer().getPlayerManager().getPlayerList().stream()
-                .map(player -> player.getGameProfile().name())
-                .filter(name -> name.toLowerCase().startsWith(input))
-                .toList();
-
-        for (String name : playerNames) {
-            builder.suggest(name);
-        }
-        return builder.buildFuture();
-    };
-
-    public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
-        dispatcher.register(literal("ignorelist")
-                        .executes(context -> listIgnored(context.getSource())));
-    }
-
-    private static int listIgnored(ServerCommandSource source) throws CommandSyntaxException {
-        ServerPlayerEntity player = source.getPlayerOrThrow();
+    private static int listIgnored(CommandSourceStack source) throws CommandSyntaxException {
+        ServerPlayer player = source.getPlayerOrException();
         StateSaverAndLoader.PlayerIgnoreData playerData = StateSaverAndLoader.getPlayerState(player);
-
         if (playerData.ignoredPlayers.isEmpty()) {
-            player.sendMessage(Text.literal("You are not ignoring any players."), false);
+            player.sendSystemMessage(Component.literal("You are not ignoring any players."), false);
         } else {
-            player.sendMessage(Text.literal("Players you are ignoring:"), false);
-            for (ServerPlayerEntity ignoredPlayer : source.getServer().getPlayerManager().getPlayerList()) {
-                if (playerData.ignoredPlayers.contains(ignoredPlayer.getUuid())) {
-                    player.sendMessage(Text.literal("- " + ignoredPlayer.getName().getString()), false);
+            player.sendSystemMessage(Component.literal("Players you are ignoring:"), false);
+            for (ServerPlayer ignoredPlayer : source.getServer().getPlayerList().getPlayers()) {
+                if (playerData.ignoredPlayers.contains(ignoredPlayer.getUUID())) {
+                    player.sendSystemMessage(Component.literal("- " + ignoredPlayer.getPlainTextName()), false);
                 }
             }
         }
         return 1;
     }
-
-
 }
