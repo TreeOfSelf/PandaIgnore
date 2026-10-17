@@ -19,13 +19,17 @@ public class IgnoreListCommand {
     static int listIgnored(CommandSourceStack source) throws CommandSyntaxException {
         ServerPlayer player = source.getPlayerOrException();
         StateSaverAndLoader.PlayerIgnoreData playerData = StateSaverAndLoader.getPlayerState(player);
-        if (playerData.ignoredPlayers.isEmpty()) {
-            player.sendSystemMessage(Component.literal("You are not ignoring any players."), false);
+        var discord = DiscordBridge.muted(player.getUUID()).values();
+        if (playerData.ignoredPlayers.isEmpty() && discord.isEmpty()) {
+            player.sendSystemMessage(Component.literal("You are not ignoring anyone."), false);
             return 1;
         }
-        player.sendSystemMessage(Component.literal("Players you are ignoring:"), false);
+        player.sendSystemMessage(Component.literal("You are ignoring:"), false);
         for (UUID uuid : playerData.ignoredPlayers) {
             player.sendSystemMessage(Component.literal("- " + Names.nameOf(source.getServer(), uuid)), false);
+        }
+        for (String name : discord) {
+            player.sendSystemMessage(Component.literal("- @" + name + " (Discord)"), false);
         }
         return 1;
     }

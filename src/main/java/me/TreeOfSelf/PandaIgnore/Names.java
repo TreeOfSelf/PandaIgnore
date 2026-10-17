@@ -31,7 +31,7 @@ public final class Names {
         return server.services().nameToIdCache().get(uuid).map(NameAndId::name).orElse(uuid.toString());
     }
 
-    // Online players you aren't ignoring yet
+    // Online players you aren't ignoring yet, and recent Discord authors as @username
     public static final SuggestionProvider<CommandSourceStack> NOT_IGNORED = (context, builder) -> {
         ServerPlayer player = context.getSource().getPlayerOrException();
         StateSaverAndLoader.PlayerIgnoreData data = StateSaverAndLoader.getPlayerState(player);
@@ -40,10 +40,14 @@ public final class Names {
             String name = p.getGameProfile().name();
             if (!data.ignoredPlayers.contains(p.getUUID()) && !p.getUUID().equals(player.getUUID()) && name.toLowerCase().startsWith(input)) builder.suggest(name);
         }
+        var muted = DiscordBridge.muted(player.getUUID()).values();
+        for (String name : DiscordBridge.recentNames()) {
+            if (!muted.contains(name) && ("@" + name).toLowerCase().startsWith(input)) builder.suggest("@" + name);
+        }
         return builder.buildFuture();
     };
 
-    // Everyone you're ignoring, online or not
+    // Everyone you're ignoring, online or not, and muted Discord users as @username
     public static final SuggestionProvider<CommandSourceStack> IGNORED = (context, builder) -> {
         ServerPlayer player = context.getSource().getPlayerOrException();
         StateSaverAndLoader.PlayerIgnoreData data = StateSaverAndLoader.getPlayerState(player);
@@ -51,6 +55,9 @@ public final class Names {
         for (UUID uuid : data.ignoredPlayers) {
             String name = nameOf(context.getSource().getServer(), uuid);
             if (name.toLowerCase().startsWith(input)) builder.suggest(name);
+        }
+        for (String name : DiscordBridge.muted(player.getUUID()).values()) {
+            if (("@" + name).toLowerCase().startsWith(input)) builder.suggest("@" + name);
         }
         return builder.buildFuture();
     };
