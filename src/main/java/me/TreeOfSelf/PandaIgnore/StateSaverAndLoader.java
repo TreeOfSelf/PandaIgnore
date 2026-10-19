@@ -52,16 +52,32 @@ public class StateSaverAndLoader extends SavedData {
     public static StateSaverAndLoader createFromNbt(CompoundTag tag) {
         StateSaverAndLoader state = new StateSaverAndLoader();
         CompoundTag playersNbt = tag.getCompoundOrEmpty("players");
+        // A bad UUID skips that one entry; throwing here would load an empty state and wipe everyone's ignores on the next save
         for (String key : playersNbt.keySet()) {
+            UUID uuid = parseUuid(key);
+            if (uuid == null) {
+                continue;
+            }
             PlayerIgnoreData playerData = new PlayerIgnoreData();
             ListTag ignoredPlayersNbt = playersNbt.getCompoundOrEmpty(key).getListOrEmpty("ignoredPlayers");
             for (int i = 0; i < ignoredPlayersNbt.size(); i++) {
-                playerData.ignoredPlayers.add(UUID.fromString(ignoredPlayersNbt.getCompoundOrEmpty(i).getStringOr("uuid", "")));
+                UUID ignored = parseUuid(ignoredPlayersNbt.getCompoundOrEmpty(i).getStringOr("uuid", ""));
+                if (ignored != null) {
+                    playerData.ignoredPlayers.add(ignored);
+                }
             }
-            UUID uuid = UUID.fromString(key);
             state.players.put(uuid, playerData);
         }
         return state;
+    }
+
+    private static UUID parseUuid(String text) {
+        try {
+            return UUID.fromString(text);
+        } catch (IllegalArgumentException e) {
+            PandaIgnore.LOGGER.warn("Skipping bad UUID in ignore data: {}", text);
+            return null;
+        }
     }
 
     public static SavedDataType<StateSaverAndLoader> createType(ServerLevel overworld) {
